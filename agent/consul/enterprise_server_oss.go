@@ -3,6 +3,7 @@
 package consul
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/hashicorp/consul/agent/pool"
@@ -28,7 +29,12 @@ func (s *Server) handleEnterpriseRPCConn(rtype pool.RPCType, conn net.Conn, isTL
 }
 
 func (s *Server) enterpriseStats() map[string]map[string]string {
-	return nil
+	stats := map[string]map[string]string{}
+	for k, v := range s.segmentLAN {
+		stats[fmt.Sprintf("serf_segment_%s", k)] = v.Stats()
+	}
+
+	return stats
 }
 
 func (s *Server) intentionReplicationEnabled() bool {
