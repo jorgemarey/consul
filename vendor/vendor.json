@@ -204,6 +204,7 @@
 		{"path":"github.com/hashicorp/yamux","checksumSHA1":"jJouEcBeEAO0ejDRJoT67jL8NjQ=","revision":"3520598351bb3500a49ae9563f5539666ae0a27c","revisionTime":"2018-06-04T19:48:46Z"},
 		{"path":"github.com/imdario/mergo","checksumSHA1":"3LWNcQT7yTaLpEmjhI/3fi8puv0=","revision":"9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4","revisionTime":"2018-07-30T21:26:40Z"},
 		{"path":"github.com/jefferai/jsonx","checksumSHA1":"cIinEjB62s8j5cpY1u7sxtg4akg=","revision":"9cc31c3135eef39b8e72585f37efa92b6ca314d0","revisionTime":"2016-07-21T23:51:17Z"},
+		{"path":"github.com/jorgemarey/autopilot","checksumSHA1":"q+4EP/D9pa3adq1jeUQaL1BvG9Q=","revision":"e79f3f1db0bc4df85a8422e59060d5c1885f31ef","revisionTime":"2019-04-29T11:08:38Z"},
 		{"path":"github.com/joyent/triton-go","checksumSHA1":"LuvUVcxSYc0KkzpqNJArgiPMtNU=","revision":"7283d1d02f7a297bf2f068178a084c5bd090002c","revisionTime":"2018-04-27T15:22:50Z"},
 		{"path":"github.com/joyent/triton-go/authentication","checksumSHA1":"yNrArK8kjkVkU0bunKlemd6dFkE=","revision":"7283d1d02f7a297bf2f068178a084c5bd090002c","revisionTime":"2018-04-27T15:22:50Z"},
 		{"path":"github.com/joyent/triton-go/client","checksumSHA1":"nppv6i9E2yqdbQ6qJkahCwELSeI=","revision":"7283d1d02f7a297bf2f068178a084c5bd090002c","revisionTime":"2018-04-27T15:22:50Z"},

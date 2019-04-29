@@ -69,35 +69,8 @@ func (d *AutopilotDelegate) PromoteNonVoters(conf *autopilot.Config, health auto
 	if err := future.Error(); err != nil {
 		return nil, fmt.Errorf("failed to get raft configuration: %v", err)
 	}
-	servers := future.Configuration().Servers
 
-	// Find any non-voters eligible for promotion.
-	stable := autopilot.PromoteStableServers(conf, health, servers)
-	// if no servers to add just return now
-	if len(stable) == 0 {
-		return stable, nil
-	}
-
-	// To avoid cycling over the members several times we create a map of them
-	serverMembers := make(map[raft.ServerID]serf.Member)
-	for _, member := range d.Serf().Members() {
-		if member.Tags["role"] == "consul" { // Just include the servers
-			serverMembers[raft.ServerID(member.Tags["id"])] = member
-		}
-	}
-
-	// Remove non voting servers
-	promoted := filterNonVoting(serverMembers, stable)
-	// if no servers to add just return now
-	if len(promoted) == 0 {
-		return promoted, nil
-	}
-
-	// Filter by zone
-	if conf.RedundancyZoneTag != "" {
-		promoted = filterZoneServers(conf, serverMembers, promoted, servers)
-	}
-	return promoted, nil
+	return autopilot.PromoteStableServers(conf, health, future.Configuration().Servers), nil
 }
 
 func (d *AutopilotDelegate) Raft() *raft.Raft {
@@ -106,37 +79,4 @@ func (d *AutopilotDelegate) Raft() *raft.Raft {
 
 func (d *AutopilotDelegate) Serf() *serf.Serf {
 	return d.server.serfLAN
-}
-
-func filterNonVoting(serverMembers map[raft.ServerID]serf.Member, stable []raft.Server) []raft.Server {
-	var promoted []raft.Server
-	for _, server := range stable {
-		member, ok := serverMembers[server.ID]
-		if ok && member.Tags["nonvoter"] != "1" { // we add those that don't have the nonvoter tag
-			promoted = append(promoted, server)
-		}
-	}
-	return promoted
-}
-
-func filterZoneServers(conf *autopilot.Config, serverMembers map[raft.ServerID]serf.Member, initial []raft.Server, servers []raft.Server) []raft.Server {
-	zoneVoter := make(map[string]bool)
-	for _, server := range servers { // we set if there're a voter en every zone we know
-		if member, ok := serverMembers[server.ID]; ok {
-			zone := member.Tags[conf.RedundancyZoneTag]
-			zoneVoter[zone] = zoneVoter[zone] || (autopilot.IsPotentialVoter(server.Suffrage) && member.Status != serf.StatusFailed)
-		}
-	}
-	promoted := make([]raft.Server, 0)
-	for _, server := range initial {
-		zone := ""
-		if member, ok := serverMembers[server.ID]; ok {
-			zone = member.Tags[conf.RedundancyZoneTag]
-		}
-		if zone == "" || !zoneVoter[zone] { // If no zone or zone doesn't have a server
-			promoted = append(promoted, server)
-			zoneVoter[zone] = true // we set that we already got a server on that zone
-		}
-	}
-	return promoted
 }
