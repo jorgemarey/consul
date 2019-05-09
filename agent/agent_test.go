@@ -23,8 +23,8 @@ import (
 	"github.com/hashicorp/consul/agent/connect"
 	"github.com/hashicorp/consul/agent/structs"
 	"github.com/hashicorp/consul/api"
-	"github.com/hashicorp/consul/testutil"
-	"github.com/hashicorp/consul/testutil/retry"
+	"github.com/hashicorp/consul/sdk/testutil"
+	"github.com/hashicorp/consul/sdk/testutil/retry"
 	"github.com/hashicorp/consul/types"
 	uuid "github.com/hashicorp/go-uuid"
 	"github.com/pascaldekloe/goe/verify"
@@ -133,6 +133,7 @@ func TestAgent_RPCPing(t *testing.T) {
 	t.Parallel()
 	a := NewTestAgent(t, t.Name(), "")
 	defer a.Shutdown()
+	testrpc.WaitForTestAgent(t, a.RPC, "dc1")
 
 	var out struct{}
 	if err := a.RPC("Status.Ping", struct{}{}, &out); err != nil {

@@ -245,7 +245,7 @@ will exit with an error at startup.
 
 * <a name="_log_rotate_bytes"></a><a href="#_log_rotate_bytes">`-log-rotate-bytes`</a> - to specify the number of bytes that should be written to a log before it needs to be rotated. Unless specified, there is no limit to the number of bytes that can be written to a log file.
 
-* <a name="_log_rotate_duration"></a><a href="#_log_rotate_duration">`-log-rotate-duration`</a> - to specify the maximum duration a log should be written to before it needs to be rotated. Unless specified, logs are rotated on a daily basis (24 hrs).
+* <a name="_log_rotate_duration"></a><a href="#_log_rotate_duration">`-log-rotate-duration`</a> - to specify the maximum duration a log should be written to before it needs to be rotated. Must be a duration value such as 30s. Defaults to 24h.
 
 * <a name="_join"></a><a href="#_join">`-join`</a> - Address of another agent
   to join upon starting up. This can be
@@ -405,7 +405,7 @@ will exit with an error at startup.
 
 * <a name="_segment"></a><a href="#_segment">`-segment`</a> - (Enterprise-only) This flag is used to set
   the name of the network segment the agent belongs to. An agent can only join and communicate with other agents
-  within its network segment. See the [Network Segments Guide](/docs/guides/segments.html) for more details.
+  within its network segment. See the [Network Segments Guide](/docs/guides/network-segments.html) for more details.
   By default, this is an empty string, which is the default network segment.
 
 * <a name="_serf_lan_port"></a><a href="#_serf_lan_port">`-serf-lan-port`</a> - the Serf LAN port to listen on.
@@ -529,6 +529,12 @@ default will automatically work with some tooling.
      it reduces the number of refreshes. However, because the caches are not actively invalidated,
      ACL policy may be stale up to the TTL value.
 
+     * <a name="acl_role_ttl"></a><a href="#acl_role_ttl">`role_ttl`</a> - Used to control
+     Time-To-Live caching of ACL roles. By default, this is 30 seconds. This setting has a
+     major performance impact: reducing it will cause more frequent refreshes while increasing
+     it reduces the number of refreshes. However, because the caches are not actively invalidated,
+     ACL role may be stale up to the TTL value.
+
      * <a name="acl_token_ttl"></a><a href="#acl_token_ttl">`token_ttl`</a> - Used to control
      Time-To-Live caching of ACL tokens. By default, this is 30 seconds. This setting has a
      major performance impact: reducing it will cause more frequent refreshes while increasing
@@ -555,8 +561,11 @@ default will automatically work with some tooling.
      * <a name="acl_enable_key_list"></a><a href="#acl_enable_key_list">`enable_key_list`</a> - Either "enabled" or "disabled", defaults to "disabled". When enabled, the `list` permission will be required on the prefix being recursively read from the KV store. Regardless of being enabled, the full set of KV entries under the prefix will be filtered to remove any entries that the request's ACL token does not grant at least read persmissions. This option is only available in Consul 1.0 and newer.
 
      * <a name="acl_enable_token_replication"></a><a href="#acl_enable_token_replication">`enable_token_replication`</a> - By
-     default secondary Consul datacenters will perform replication of only ACL policies. Setting this configuration will
-     also enable ACL token replication.
+     default secondary Consul datacenters will perform replication of only ACL policies and roles.
+     Setting this configuration will will enable ACL token replication and
+     allow for the creation of both [local tokens](/api/acl/tokens.html#local)
+     and [auth methods](/docs/acl/acl-auth-methods.html) in connected secondary
+     datacenters.
 
      * <a name="acl_enable_token_persistence"></a><a href="#acl_enable_token_persistence">`enable_token_persistence`</a> - Either
     `true` or `false`. When `true` tokens set using the API will be persisted to disk and reloaded when an agent restarts.
@@ -806,6 +815,21 @@ default will automatically work with some tooling.
 
 * <a name="client_addr"></a><a href="#client_addr">`client_addr`</a> Equivalent to the
   [`-client` command-line flag](#_client).
+
+* <a name="config_entries"></a><a href="#config_entries">`config_entries`</a>
+    This object allows setting options for centralized config entries.
+
+    The following sub-keys are available:
+
+    * <a name="bootstrap"></a><a href="#config_entries_bootstrap">`bootstrap`</a>
+        This object allows configuring centralized config entries to be bootstrapped
+        by the leader. These entries will be reloaded during an agent config reload.
+
+        The following sub-keys are available:
+
+        * <a name="proxy_defaults"></a><a href="#config_entries_bootstrap_proxy_defaults">`proxy_defaults`</a>
+          This object should contain a mapping of config entry names to an opaque proxy configuration mapping.
+          Currently the only supported name is `global`
 
 * <a name="connect"></a><a href="#connect">`connect`</a>
     This object allows setting options for the Connect feature.
@@ -1076,10 +1100,10 @@ default will automatically work with some tooling.
         600, ie: 10 minutes.
 
     * <a name="dns_use_cache"></a><a href="#dns_use_cache">`use_cache`</a> - When set to true, DNS resolution will use the agent cache described
-      in [agent caching](/api/index.html#agent-caching). This setting affects all service and prepared queries DNS requests. Implies [`allow_stale`](#allow_stale)
+      in [agent caching](/api/features/caching.html). This setting affects all service and prepared queries DNS requests. Implies [`allow_stale`](#allow_stale)
 
     * <a name="dns_cache_max_age"></a><a href="#dns_cache_max_age">`cache_max_age`</a> - When [use_cache](#dns_use_cache) is enabled, the agent
-      will attempt to re-fetch the result from the servers if the cached value is older than this duration. See: [agent caching](/api/index.html#agent-caching).
+      will attempt to re-fetch the result from the servers if the cached value is older than this duration. See: [agent caching](/api/features/caching.html).
 
 * <a name="domain"></a><a href="#domain">`domain`</a> Equivalent to the
   [`-domain` command-line flag](#_domain).
@@ -1094,6 +1118,14 @@ default will automatically work with some tooling.
   When set, uses a subset of the agent's TLS configuration (`key_file`, `cert_file`, `ca_file`, `ca_path`, and
   `server_name`) to set up the client for HTTP or gRPC health checks. This allows services requiring 2-way TLS to
   be checked using the agent's credentials. This was added in Consul 1.0.1 and defaults to false.
+
+* <a name="enable_central_service_config"></a><a href="#enable_central_service_config">`enable_central_service_config`</a>
+  When set, the Consul agent will look for any centralized service configurations that match a registering service instance. 
+  If it finds any, the agent will merge the centralized defaults with the service instance configuration. This allows for 
+  things like service protocol or proxy configuration to be defined centrally and inherited by any
+  affected service registrations.
+  
+  
 
 * <a name="enable_debug"></a><a href="#enable_debug">`enable_debug`</a> When set, enables some
   additional debugging features. Currently, this is only used to access runtime profiling HTTP endpoints, which
@@ -1295,7 +1327,7 @@ default will automatically work with some tooling.
 
 *   <a name="performance"></a><a href="#performance">`performance`</a> Available in Consul 0.7 and
     later, this is a nested object that allows tuning the performance of different subsystems in
-    Consul. See the [Server Performance](/docs/guides/performance.html) guide for more details. The
+    Consul. See the [Server Performance](/docs/install/performance.html) guide for more details. The
     following parameters are available:
 
     *   <a name="leave_drain_time"></a><a href="#leave_drain_time">`leave_drain_time`</a> - A duration
@@ -1313,12 +1345,12 @@ default will automatically work with some tooling.
         performance.
 
         By default, Consul will use a lower-performance timing that's suitable
-        for [minimal Consul servers](/docs/guides/performance.html#minimum), currently equivalent
+        for [minimal Consul servers](/docs/install/performance.html#minimum), currently equivalent
         to setting this to a value of 5 (this default may be changed in future versions of Consul,
         depending if the target minimum server profile changes). Setting this to a value of 1 will
         configure Raft to its highest-performance mode, equivalent to the default timing of Consul
-        prior to 0.7, and is recommended for [production Consul servers](/docs/guides/performance.html#production).
-        See the note on [last contact](/docs/guides/performance.html#last-contact) timing for more
+        prior to 0.7, and is recommended for [production Consul servers](/docs/install/performance.html#production).
+        See the note on [last contact](/docs/install/performance.html#last-contact) timing for more
         details on tuning this parameter. The maximum allowed value is 10.
 
     *   <a name="rpc_hold_timeout"></a><a href="#rpc_hold_timeout">`rpc_hold_timeout`</a> - A duration
@@ -1328,8 +1360,8 @@ default will automatically work with some tooling.
 
 * <a name="ports"></a><a href="#ports">`ports`</a> This is a nested object that allows setting
   the bind ports for the following keys:
-    * <a name="dns_port"></a><a href="#dns_port">`dns`</a> - The DNS server, -1 to disable. Default 8600.
-    * <a name="http_port"></a><a href="#http_port">`http`</a> - The HTTP API, -1 to disable. Default 8500.
+    * <a name="dns_port"></a><a href="#dns_port">`dns`</a> - The DNS server, -1 to disable. Default 8600. TCP and UDP.
+    * <a name="http_port"></a><a href="#http_port">`http`</a> - The HTTP API, -1 to disable. Default 8500. TCP only.
     * <a name="https_port"></a><a href="#https_port">`https`</a> - The HTTPS
       API, -1 to disable. Default -1 (disabled). **We recommend using `8501`** for
       `https` by convention as some tooling will work automatically with this.
@@ -1338,11 +1370,11 @@ default will automatically work with some tooling.
       `grpc` by convention as some tooling will work automatically with this.
       This is set to `8502` by default when the agent runs in `-dev` mode.
       Currently gRPC is only used to expose Envoy xDS API to Envoy proxies.
-    * <a name="serf_lan_port"></a><a href="#serf_lan_port">`serf_lan`</a> - The Serf LAN port. Default 8301.
+    * <a name="serf_lan_port"></a><a href="#serf_lan_port">`serf_lan`</a> - The Serf LAN port. Default 8301. TCP and UDP.
     * <a name="serf_wan_port"></a><a href="#serf_wan_port">`serf_wan`</a> - The Serf WAN port. Default 8302. Set to -1
       to disable. **Note**: this will disable WAN federation which is not recommended. Various catalog and WAN related
-      endpoints will return errors or empty results.
-    * <a name="server_rpc_port"></a><a href="#server_rpc_port">`server`</a> - Server RPC address. Default 8300.
+      endpoints will return errors or empty results. TCP and UDP.
+    * <a name="server_rpc_port"></a><a href="#server_rpc_port">`server`</a> - Server RPC address. Default 8300. TCP only.
     * <a name="proxy_min_port"></a><a href="#proxy_min_port">`proxy_min_port`</a> [**Deprecated**](/docs/connect/proxies/managed-deprecated.html) - Minimum port number to use for automatically assigned [managed proxies](/docs/connect/proxies/managed-deprecated.html). Default 20000.
     * <a name="proxy_max_port"></a><a href="#proxy_max_port">`proxy_max_port`</a> [**Deprecated**](/docs/connect/proxies/managed-deprecated.html) - Maximum port number to use for automatically assigned [managed proxies](/docs/connect/proxies/managed-deprecated.html). Default 20255.
     * <a name="sidecar_min_port"></a><a
@@ -1425,7 +1457,7 @@ default will automatically work with some tooling.
 
 * <a name="segments"></a><a href="#segments">`segments`</a> (Enterprise-only) This is a list of nested objects that allows setting
   the bind/advertise information for network segments. This can only be set on servers. See the
-  [Network Segments Guide](/docs/guides/segments.html) for more details.
+  [Network Segments Guide](/docs/guides/network-segments.html) for more details.
     * <a name="segment_name"></a><a href="#segment_name">`name`</a> - The name of the segment. Must be a string between
     1 and 64 characters in length.
     * <a name="segment_bind"></a><a href="#segment_bind">`bind`</a> - The bind address to use for the segment's gossip layer.
@@ -1705,24 +1737,10 @@ default will automatically work with some tooling.
 ## <a id="ports-used"></a>Ports Used
 
 Consul requires up to 6 different ports to work properly, some on
-TCP, UDP, or both protocols. Below we document the requirements for each
-port.
+TCP, UDP, or both protocols. 
 
-* Server RPC (Default 8300). This is used by servers to handle incoming
-  requests from other agents. TCP only.
-
-* Serf LAN (Default 8301). This is used to handle gossip in the LAN.
-  Required by all agents. TCP and UDP.
-
-* Serf WAN (Default 8302). This is used by servers to gossip over the WAN, to
-  other servers. TCP and UDP. As of Consul 0.8 the WAN join flooding feature requires
-  the Serf WAN port (TCP/UDP) to be listening on both WAN and LAN interfaces. See also:
-   [Consul 0.8.0 CHANGELOG](https://github.com/hashicorp/consul/blob/master/CHANGELOG.md#080-april-5-2017) and [GH-3058](https://github.com/hashicorp/consul/issues/3058)
-
-* HTTP API (Default 8500). This is used by clients to talk to the HTTP
-  API. TCP only.
-
-* DNS Interface (Default 8600). Used to resolve DNS queries. TCP and UDP.
+Review the [required ports](/docs/install/ports.html) table for a list of 
+required ports and their default settings. 
 
 ## <a id="reloadable-configuration"></a>Reloadable Configuration
 

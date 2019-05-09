@@ -22,13 +22,14 @@ properly installed and configured with your Kubernetes cluster.
 may still change significantly over time. Please always run Helm with
 `--dry-run` before any install or upgrade to verify changes.
 
-~> **Security Warning:** By default, the chart will install an insecure configuration
-of Consul. This provides a less complicated out-of-box experience for new users,
-but is not appropriate for a production setup. It is highly recommended to use
-a properly secured Kubernetes cluster or make sure that you understand and enable
-the [recommended security features](/docs/internals/security.html). Currently,
-some of these features are not supported in the Helm chart and require additional
-manual configuration.
+~> **Security Warning:** By default, the chart will install an insecure
+configuration of Consul. This provides a less complicated out-of-box experience
+for new users, but is not appropriate for a production setup. Make sure that
+your Kubernetes cluster is properly secured to prevent unwanted access to
+Consul, or that you understand and enable the
+[recommended Consul security features](/docs/internals/security.html).
+Currently, some of these features are not supported in the Helm chart and
+require additional manual configuration.
 
 ## Using the Helm Chart
 
@@ -156,6 +157,13 @@ and consider if they're appropriate for your deployment.
       configuration files from this volume with `-config-dir`. This defaults
       to false.
 
+        ```yaml
+        extraVolumes:    
+          -  type: "secret"
+             name: "consul-certs"
+             load: false        
+        ```
+
   * <a name="v-server-affinity" href="#v-server-affinity">`affinity`</a> (`string`) - This value defines the [affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for server pods. It defaults to allowing only a single pod on each node, which minimizes risk of the cluster becoming unusable if a node is lost. If you need to run more pods per node (for example, testing on Minikube), set this value to `null`.
 
         ```yaml
@@ -231,6 +239,13 @@ and consider if they're appropriate for your deployment.
       configuration files from this volume with `-config-dir`. This defaults
       to false.
 
+        ```yaml
+        extraVolumes:    
+          -  type: "secret"
+             name: "consul-certs"
+             load: false        
+        ```
+
   * <a name="v-client-priorityclassname" href="#v-client-priorityclassname">`priorityClassName`</a> (`string`) - This value references an existing Kubernetes [priorityClassName](https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#pod-priority) that can be assigned to client pods.
 
   * <a name="v-client-annotations" href="#v-client-annotations">`annotations`</a> (`string`) - This value defines additional annotations for client pods. This should be a formatted as a multi-line string.
@@ -259,6 +274,8 @@ to run the sync program.
   * <a name="v-synccatalog-tok8s" href="#v-synccatalog-tok8s">`toK8S`</a> (`boolean: true`) - If true, will sync Consul services to Kubernetes. This can be disabled to have a one-way sync.
 
   * <a name="v-synccatalog-k8sprefix" href="#v-synccatalog-k8sprefix">`k8sPrefix`</a> (`string: ""`) - A prefix to prepend to all services registered in Kubernetes from Consul. This defaults to `""` where no prefix is prepended; Consul services are synced with the same name to Kubernetes. (Consul -> Kubernetes sync only)
+
+  * <a name="v-synccatalog-consulPrefix" href="#v-synccatalog-consulPrefix">`consulPrefix`</a> (`string: ""`) - A prefix to prepend to all services registered in Consul from Kubernetes. This defaults to `""` where no prefix is prepended. Service names within Kubernetes remain unchanged. (Kubernetes -> Consul sync only)
 
   * <a name="v-synccatalog-k8stag" href="#v-synccatalog-k8stag">`k8sTag`</a> (`string: null`) - An optional tag that is applied to all of the Kubernetes services that are synced into Consul. If nothing is set, this defaults to "k8s". (Kubernetes -> Consul sync only)
 
@@ -461,7 +478,7 @@ ui:
 
 connectInject:
   enabled: true
-  default: false 
+  default: false
   namespaceSelector: "my-app"
 
 ```
