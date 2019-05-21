@@ -422,7 +422,7 @@ function build_consul_local {
    then
       status "Using gox for concurrent compilation"
 
-      CGO_ENABLED=0 gox \
+      CGO_ENABLED=${CGO_ENABLED} gox \
          -os="${build_os}" \
          -arch="${build_arch}" \
          -osarch="!darwin/arm !darwin/arm64 !freebsd/arm"  \
@@ -438,11 +438,22 @@ function build_consul_local {
          return 1
       fi
    else
+      ORIG_GOTAGS=${GOTAGS}
       status "Building sequentially with go install"
       for os in ${build_os}
       do
          for arch in ${build_arch}
          do
+            if [ `uname -s` == Darwin -a ${os} == darwin ]
+            then
+              status "Building ${os} with CGO"
+              GOTAGS="netcgo ${ORIG_GOTAGS}"
+              CGO_ENABLED=1
+            else
+              GOTAGS=${ORIG_GOTAGS}
+              CGO_ENABLED=0
+            fi
+
             outdir="pkg.bin.new/${extra_dir}${os}_${arch}"
             osarch="${os}/${arch}"
             if test "${osarch}" == "darwin/arm" -o "${osarch}" == "darwin/arm64" -o "${osarch}" == "freebsd/arm64" -o "${osarch}" == "windows/arm" -o "${osarch}" == "windows/arm64" -o "${osarch}" == "freebsd/arm"
@@ -468,7 +479,7 @@ function build_consul_local {
             if [ $os == "windows" ];then
                 binname="consul.exe"
             fi
-            CGO_ENABLED=0 GOOS=${os} GOARCH=${arch} go install -ldflags "${GOLDFLAGS}" -tags "${GOTAGS}" && cp "${MAIN_GOPATH}/bin/${GOBIN_EXTRA}${binname}" "${outdir}/${binname}"
+            CGO_ENABLED=${CGO_ENABLED} GOOS=${os} GOARCH=${arch} go install -ldflags "${GOLDFLAGS}" -tags "${GOTAGS}" && cp "${MAIN_GOPATH}/bin/${GOBIN_EXTRA}${binname}" "${outdir}/${binname}"
             if test $? -ne 0
             then
                err "ERROR: Failed to build Consul for ${osarch}"
