@@ -96,7 +96,22 @@ at startup. If you specify "[::]", Consul will
 IPv6 address. If there are **multiple public IPv6 addresses** available, Consul
 will exit with an error at startup.
   Consul uses both TCP and UDP and the same port for both. If you
-  have any firewalls, be sure to allow both protocols. **In Consul 1.0 and later this can be set to a [go-sockaddr](https://godoc.org/github.com/hashicorp/go-sockaddr/template) template that needs to resolve to a single address.**
+  have any firewalls, be sure to allow both protocols. **In Consul 1.0 and later this can be set to a [go-sockaddr](https://godoc.org/github.com/hashicorp/go-sockaddr/template) template that needs to resolve to a single address.** Some example templates:
+
+    ```sh
+    # Using address within a specific CIDR
+    $ consul agent -bind '{{ GetPrivateInterfaces | include "network" "10.0.0.0/8" | attr "address" }}'
+    ```
+
+    ```sh
+    # Using a static network interface name
+    $ consul agent -bind '{{ GetInterfaceIP "eth0" }}'
+    ```
+
+    ```sh
+    # Using regular expression matching for network interface name that is forwardable and up
+    $ consul agent -bind '{{ GetAllInterfaces | include "name" "^eth" | include "flags" "forwardable|up" | attr "address" }}'
+    ```
 
 * <a name="_serf_wan_bind"></a><a href="#_serf_wan_bind">`-serf-wan-bind`</a> -
   The address that should be bound to for Serf WAN gossip communications. By
@@ -405,7 +420,7 @@ will exit with an error at startup.
 
 * <a name="_segment"></a><a href="#_segment">`-segment`</a> - (Enterprise-only) This flag is used to set
   the name of the network segment the agent belongs to. An agent can only join and communicate with other agents
-  within its network segment. See the [Network Segments Guide](/docs/guides/network-segments.html) for more details.
+  within its network segment. See the [Network Segments Guide](https://learn.hashicorp.com/consul/day-2-operations/network-segments) for more details.
   By default, this is an empty string, which is the default network segment.
 
 * <a name="_serf_lan_port"></a><a href="#_serf_lan_port">`-serf-lan-port`</a> - the Serf LAN port to listen on.
@@ -558,7 +573,7 @@ default will automatically work with some tooling.
      a whitelist: any operation not specifically allowed is blocked. *Note*: this will not take effect until
      you've enabled ACLs.
 
-     * <a name="acl_enable_key_list"></a><a href="#acl_enable_key_list">`enable_key_list`</a> - Either "enabled" or "disabled", defaults to "disabled". When enabled, the `list` permission will be required on the prefix being recursively read from the KV store. Regardless of being enabled, the full set of KV entries under the prefix will be filtered to remove any entries that the request's ACL token does not grant at least read persmissions. This option is only available in Consul 1.0 and newer.
+     * <a name="acl_enable_key_list"></a><a href="#acl_enable_key_list">`enable_key_list`</a> - Either "enabled" or "disabled", defaults to "disabled". When enabled, the `list` permission will be required on the prefix being recursively read from the KV store. Regardless of being enabled, the full set of KV entries under the prefix will be filtered to remove any entries that the request's ACL token does not grant at least read permissions. This option is only available in Consul 1.0 and newer.
 
      * <a name="acl_enable_token_replication"></a><a href="#acl_enable_token_replication">`enable_token_replication`</a> - By
      default secondary Consul datacenters will perform replication of only ACL policies and roles.
@@ -596,9 +611,7 @@ default will automatically work with some tooling.
         <a href="#acl_tokens_default">`default`</a> will be used.
         <br/><br/>
         This token must at least have write access to the node name it will register as in order to set any
-        of the node-level information in the catalog such as metadata, or the node's tagged addresses. There
-        are other places this token is used, please see [ACL Agent Token](/docs/guides/acl.html#acl-agent-token)
-        for more details.
+        of the node-level information in the catalog such as metadata, or the node's tagged addresses.
 
         * <a name="acl_tokens_agent_master"></a><a href="#acl_tokens_agent_master">`agent_master`</a> -
         Used to access <a href="/api/agent.html">agent endpoints</a> that require agent read
@@ -620,7 +633,7 @@ default will automatically work with some tooling.
 
     This designates the datacenter which is authoritative for ACL information. It must be provided to enable ACLs. All servers and datacenters must agree on the ACL datacenter. Setting it on the servers is all you need for cluster-level enforcement, but for the APIs to forward properly from the clients,
     it must be set on them too. In Consul 0.8 and later, this also enables agent-level enforcement
-    of ACLs. Please see the [ACL Guide](/docs/guides/acl.html) for more details.
+    of ACLs. Please see the [ACL Guide](https://learn.hashicorp.com/consul/security-networking/production-acls) for more details.
 
 * <a name="acl_default_policy_legacy"></a><a href="#acl_default_policy_legacy">`acl_default_policy`</a> - **Deprecated in Consul 1.4.0.
   See the [`acl.default_policy`](#acl_default_policy) field instead.** Either
@@ -647,8 +660,7 @@ default will automatically work with some tooling.
   or write privileges, or node read privileges, even if Consul servers aren't present to validate
   any tokens. This should only be used by operators during outages, regular ACL tokens should normally
   be used by applications. This was added in Consul 0.7.2 and is only used when
-  <a href="#acl_enforce_version_8">`acl_enforce_version_8`</a> is set to true. Please see
-  [ACL Agent Master Token](/docs/guides/acl.html#acl-agent-master-token) for more details.
+  <a href="#acl_enforce_version_8">`acl_enforce_version_8`</a> is set to true. 
 
 *   <a name="acl_agent_token_legacy"></a><a href="#acl_agent_token_legacy">`acl_agent_token`</a> -
     **Deprecated in Consul 1.4.0. See the [`acl.tokens.agent`](#acl_tokens_agent) field instead.**
@@ -656,9 +668,7 @@ default will automatically work with some tooling.
     <a href="#acl_token">`acl_token`</a> will be used. This was added in Consul 0.7.2.
 
     This token must at least have write access to the node name it will register as in order to set any
-    of the node-level information in the catalog such as metadata, or the node's tagged addresses. There
-    are other places this token is used, please see [ACL Agent Token](/docs/guides/acl.html#acl-agent-token)
-    for more details.
+    of the node-level information in the catalog such as metadata, or the node's tagged addresses. 
 
 * <a name="acl_enforce_version_8"></a><a href="#acl_enforce_version_8">`acl_enforce_version_8`</a> -
   **Deprecated in Consul 1.4.0**
@@ -666,7 +676,7 @@ default will automatically work with some tooling.
   previewed before Consul 0.8. Added in Consul 0.7.2, this defaults to false in versions of
   Consul prior to 0.8, and defaults to true in Consul 0.8 and later. This helps ease the
   transition to the new ACL features by allowing policies to be in place before enforcement begins.
-  Please see the [ACL Guide](/docs/guides/acl.html#version_8_acls) for more details.
+
 
 *   <a name="acl_master_token_legacy"></a><a href="#acl_master_token_legacy">`acl_master_token`</a> -
     **Deprecated in Consul 1.4.0. See the [`acl.tokens.master`](#acl_tokens_master) field instead.** Only used
@@ -684,7 +694,8 @@ default will automatically work with some tooling.
 *   <a name="acl_replication_token_legacy"></a><a href="#acl_replication_token_legacy">`acl_replication_token`</a> -
     **Deprecated in Consul 1.4.0. See the [`acl.tokens.replication`](#acl_tokens_replication) field instead.**
     Only used for servers outside the [`primary_datacenter`](#primary_datacenter) running Consul 0.7 or later.
-    When provided, this will enable [ACL replication](/docs/guides/acl.html#replication) using this
+    When provided, this will enable [ACL replication](https://learn.hashicorp.com/consul/day-2-operations/acl-replication) using this
+    ACL replication using this
     token to retrieve and replicate the ACLs to the non-authoritative local datacenter. In Consul 0.9.1
     and later you can enable ACL replication using [`enable_acl_replication`](#enable_acl_replication)
     and then set the token later using the [agent token API](/api/agent.html#update-acl-tokens) on each
@@ -693,8 +704,7 @@ default will automatically work with some tooling.
 
     If there's a partition or other outage affecting the authoritative datacenter, and the
     [`acl_down_policy`](/docs/agent/options.html#acl_down_policy) is set to "extend-cache", tokens not
-    in the cache can be resolved during the outage using the replicated set of ACLs. Please see the
-    [ACL Guide](/docs/guides/acl.html#replication) replication section for more details.
+    in the cache can be resolved during the outage using the replicated set of ACLs. 
 
 * <a name="acl_token_legacy"></a><a href="#acl_token_legacy">`acl_token`</a> -
   **Deprecated in Consul 1.4.0. See the [`acl.tokens.default`](#acl_tokens_default) field instead.**
@@ -750,7 +760,7 @@ default will automatically work with some tooling.
 
 *   <a name="autopilot"></a><a href="#autopilot">`autopilot`</a> Added in Consul 0.8, this object
     allows a number of sub-keys to be set which can configure operator-friendly settings for Consul servers.
-    For more information about Autopilot, see the [Autopilot Guide](/docs/guides/autopilot.html).
+    For more information about Autopilot, see the [Autopilot Guide](https://learn.hashicorp.com/consul/day-2-operations/autopilot).
 
     The following sub-keys are available:
 
@@ -821,15 +831,14 @@ default will automatically work with some tooling.
 
     The following sub-keys are available:
 
-    * <a name="bootstrap"></a><a href="#config_entries_bootstrap">`bootstrap`</a>
-        This object allows configuring centralized config entries to be bootstrapped
-        by the leader. These entries will be reloaded during an agent config reload.
+    * <a name="config_entries_bootstrap"></a><a href="#config_entries_bootstrap">`bootstrap`</a>
+        This is a list of inlined config entries to insert into the state store when the Consul server
+        gains leadership. This option is only applicable to server nodes. Each bootstrap
+        entry will be created only if it does not exist. When reloading, any new entries
+        that have been added to the configuration will be processed. See the
+        [configuration entry docs](/docs/agent/config_entries.html) for more details about the
+        contents of each entry.
 
-        The following sub-keys are available:
-
-        * <a name="proxy_defaults"></a><a href="#config_entries_bootstrap_proxy_defaults">`proxy_defaults`</a>
-          This object should contain a mapping of config entry names to an opaque proxy configuration mapping.
-          Currently the only supported name is `global`
 
 * <a name="connect"></a><a href="#connect">`connect`</a>
     This object allows setting options for the Connect feature.
@@ -1001,7 +1010,7 @@ default will automatically work with some tooling.
 
 *   <a name="dns_config"></a><a href="#dns_config">`dns_config`</a> This object allows a number
     of sub-keys to be set which can tune how DNS queries are serviced. See this guide on
-    [DNS caching](/docs/guides/dns-cache.html) for more detail.
+    [DNS caching](https://learn.hashicorp.com/consul/security-networking/dns-caching) for more detail.
 
     The following sub-keys are available:
 
@@ -1109,7 +1118,7 @@ default will automatically work with some tooling.
   [`-domain` command-line flag](#_domain).
 
 * <a name="enable_acl_replication"></a><a href="#enable_acl_replication">`enable_acl_replication`</a> When
-  set on a Consul server, enables [ACL replication](/docs/guides/acl.html#replication) without having to set
+  set on a Consul server, enables ACL replication without having to set
   the replication token via [`acl_replication_token`](#acl_replication_token). Instead, enable ACL replication
   and then introduce the token using the [agent token API](/api/agent.html#update-acl-tokens) on each server.
   See [`acl_replication_token`](#acl_replication_token) for more details.
@@ -1120,16 +1129,14 @@ default will automatically work with some tooling.
   be checked using the agent's credentials. This was added in Consul 1.0.1 and defaults to false.
 
 * <a name="enable_central_service_config"></a><a href="#enable_central_service_config">`enable_central_service_config`</a>
-  When set, the Consul agent will look for any centralized service configurations that match a registering service instance. 
-  If it finds any, the agent will merge the centralized defaults with the service instance configuration. This allows for 
+  When set, the Consul agent will look for any centralized service configurations that match a registering service instance.
+  If it finds any, the agent will merge the centralized defaults with the service instance configuration. This allows for
   things like service protocol or proxy configuration to be defined centrally and inherited by any
   affected service registrations.
-  
-  
 
 * <a name="enable_debug"></a><a href="#enable_debug">`enable_debug`</a> When set, enables some
   additional debugging features. Currently, this is only used to access runtime profiling HTTP endpoints, which
-  are available with an `operator:read` ACL regardles of the value of `enable_debug`.
+  are available with an `operator:read` ACL regardless of the value of `enable_debug`.
 
 * <a name="enable_script_checks"></a><a href="#enable_script_checks">`enable_script_checks`</a> Equivalent to the
   [`-enable-script-checks` command-line flag](#_enable_script_checks).
@@ -1252,7 +1259,7 @@ default will automatically work with some tooling.
       endpoints that begin with `/v1/acl`. This only works with API endpoints, not `/ui` or
       `/debug`, those must be disabled with their respective configuration options. Any CLI
       commands that use disabled endpoints will no longer function as well. For more general
-      access control, Consul's [ACL system](/docs/guides/acl.html) should be used, but this option
+      access control, Consul's [ACL system](https://learn.hashicorp.com/consul/security-networking/production-acls) should be used, but this option
       is useful for removing access to HTTP API endpoints completely, or on specific agents. This
       is available in Consul 0.9.0 and later.
 
@@ -1327,7 +1334,7 @@ default will automatically work with some tooling.
 
 *   <a name="performance"></a><a href="#performance">`performance`</a> Available in Consul 0.7 and
     later, this is a nested object that allows tuning the performance of different subsystems in
-    Consul. See the [Server Performance](/docs/install/performance.html) guide for more details. The
+    Consul. See the [Server Performance](/docs/install/performance.html) documentation for more details. The
     following parameters are available:
 
     *   <a name="leave_drain_time"></a><a href="#leave_drain_time">`leave_drain_time`</a> - A duration
@@ -1395,7 +1402,7 @@ default will automatically work with some tooling.
   designates the datacenter which is authoritative for ACL information, intentions and is the root
   Certificate Authority for Connect. It must be provided to enable ACLs. All servers and datacenters
   must agree on the primary datacenter. Setting it on the servers is all you need for cluster-level enforcement, but for the APIs to forward properly from the clients, it must be set on them too. In
-  Consul 0.8 and later, this also enables agent-level enforcement of ACLs. Please see the [ACL Guide](/docs/guides/acl.html) for more details.
+  Consul 0.8 and later, this also enables agent-level enforcement of ACLs. 
 
 * <a name="raft_protocol"></a><a href="#raft_protocol">`raft_protocol`</a> Equivalent to the
   [`-raft-protocol` command-line flag](#_raft_protocol).
@@ -1457,7 +1464,7 @@ default will automatically work with some tooling.
 
 * <a name="segments"></a><a href="#segments">`segments`</a> (Enterprise-only) This is a list of nested objects that allows setting
   the bind/advertise information for network segments. This can only be set on servers. See the
-  [Network Segments Guide](/docs/guides/network-segments.html) for more details.
+  [Network Segments Guide](https://learn.hashicorp.com/consul/day-2-operations/network-segments) for more details.
     * <a name="segment_name"></a><a href="#segment_name">`name`</a> - The name of the segment. Must be a string between
     1 and 64 characters in length.
     * <a name="segment_bind"></a><a href="#segment_bind">`bind`</a> - The bind address to use for the segment's gossip layer.

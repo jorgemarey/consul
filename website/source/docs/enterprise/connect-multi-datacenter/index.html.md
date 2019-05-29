@@ -14,7 +14,7 @@ and federation of Certificate Authority trust.
 
 Sidecar proxy's [upstream configuration](/docs/connect/proxies.html#upstream-configuration-reference) 
 may specify an alternative datacenter or a prepared query that can address services 
-in multiple datacenters (such as the [geo failover](/docs/guides/geo-failover.html) pattern).
+in multiple datacenters (such as the [geo failover](https://learn.hashicorp.com/consul/developer-discovery/geo-failover) pattern).
 
 [Intentions](/docs/connect/intentions.html) verify connections between services by 
 source and destination name seamlessly across datacenters. Support for constraining Intentions 
@@ -28,7 +28,7 @@ workloads discover an externally routable IP.
 # Replication
 
 Intention replication happens automatically but requires the [`primary_datacenter`](/docs/agent/options.html#primary_datacenter)
-configuration to be set to specify a datacenter that is authorative
+configuration to be set to specify a datacenter that is authoritative
 for intentions. In production setups with ACLs enabled, the [replication token](/docs/agent/options.html#acl_tokens_replication)
 must also be set in secondary datacenter server's configuration.
 
