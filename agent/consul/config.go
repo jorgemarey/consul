@@ -410,6 +410,9 @@ type Config struct {
 	// ConfigEntryBootstrap contains a list of ConfigEntries to ensure are created
 	// If entries of the same Kind/Name exist already these will not update them.
 	ConfigEntryBootstrap []structs.ConfigEntry
+
+	// UpgradeVersion is used for autopilot custom upgrades
+	UpgradeVersion string
 }
 
 func (c *Config) ToTLSUtilConfig() tlsutil.Config {

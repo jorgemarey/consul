@@ -67,6 +67,9 @@ func (s *Server) setupSerf(conf *serf.Config, ch chan serf.Event, path string, w
 	if s.config.NonVoter {
 		conf.Tags["nonvoter"] = "1"
 	}
+	if s.config.UpgradeVersion != "" {
+		conf.Tags["ap_version"] = s.config.UpgradeVersion
+	}
 	if s.config.UseTLS {
 		conf.Tags["use_tls"] = "1"
 	}

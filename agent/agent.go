@@ -1141,6 +1141,11 @@ func (a *Agent) consulConfig() (*consul.Config, error) {
 
 	base.ConfigEntryBootstrap = a.config.ConfigEntryBootstrap
 
+	if a.config.NodeMeta != nil && a.config.NodeMeta["upgrade_version"] != "" {
+		base.UpgradeVersion = a.config.NodeMeta["upgrade_version"]
+		delete(a.config.NodeMeta, "upgrade_version")
+	}
+
 	return base, nil
 }
 
