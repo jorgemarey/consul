@@ -78,7 +78,7 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 	github.com/imdario/mergo v0.3.6
 	github.com/jefferai/jsonx v0.0.0-20160721235117-9cc31c3135ee // indirect
-	github.com/jorgemarey/autopilot v0.0.0-20190429110838-e79f3f1db0bc
+	github.com/jorgemarey/autopilot v0.1.0
 	github.com/keybase/go-crypto v0.0.0-20180614160407-5114a9a81e1b // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kr/text v0.1.0
